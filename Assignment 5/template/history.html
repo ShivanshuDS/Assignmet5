@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block title %}ThyroidDetect — History{% endblock %}
+
+{% block head %}
+<style>
+main { max-width: 1160px; margin: 0 auto; padding: calc(var(--nav) + 36px) 24px 70px; }
+.pg-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 14px; }
+.pg-head h1 { font-family: 'Libre Baskerville', serif; font-size: 28px; font-weight: 700; }
+.pg-head p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.btn-clear { padding: 9px 18px; border: 1.5px solid rgba(220,38,38,.3); color: var(--red); background: #fef2f2; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: var(--t); }
+.btn-clear:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
+/* Filters */
+.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.filters input, .filters select {
+  padding: 9px 13px; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 10px;
+  font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--text); outline: none;
+  transition: var(--t);
+}
+.filters input:focus, .filters select:focus { border-color: var(--teal); }
+.filters input { flex: 1; min-width: 200px; }
+.filters input::placeholder { color: var(--muted); }
+.filters select option { background: var(--surface); }
+.chips { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 24px; }
+.chip { padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--border); background: var(--surface); color: var(--muted); transition: var(--t); }
+.chip.all.act  { background: var(--teal); border-color: var(--teal); color: #fff; }
+.chip.pos.act  { background: var(--red); border-color: var(--red); color: #fff; }
+.chip.neg2.act { background: var(--green); border-color: var(--green); color: #fff; }
+
+/* Table */
+.table-wrap { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 14px 18px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); text-align: left; border-bottom: 1px solid var(--border); background: rgba(13,148,136,.04); }
+tbody tr { border-bottom: 1px solid rgba(0,0,0,.05); transition: background .2s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(13,148,136,.04); }
+tbody td { padding: 13px 18px; font-size: 13.5px; color: var(--text); }
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; }
+.badge.P { background: #fee2e2; color: #b91c1c; border: 1px solid rgba(220,38,38,.2); }
+.badge.N { background: var(--teal-pale); color: var(--teal-2); border: 1px solid var(--border); }
+.del-btn { background: none; border: none; cursor: pointer; font-size: 15px; padding: 3px 7px; border-radius: 7px; color: var(--muted); transition: var(--t); }
+.del-btn:hover { background: #fee2e2; color: var(--red); }
+.conf-mini { display: flex; align-items: center; gap: 7px; }
+.cbar { width: 50px; height: 4px; background: rgba(0,0,0,.08); border-radius: 2px; overflow: hidden; }
+.cfill { height: 100%; border-radius: 2px; }
+.P .cfill { background: #ef4444; }
+.N .cfill { background: var(--teal-2); }
+
+/* Empty */
+.empty-state { text-align: center; padding: 80px 24px; }
+.empty-state .ei { font-size: 48px; margin-bottom: 14px; display: block; }
+.empty-state h2 { font-family: 'Libre Baskerville', serif; font-size: 22px; font-weight: 700; margin-bottom: 7px; }
+.empty-state p { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+.btn-go { display: inline-block; padding: 12px 26px; background: linear-gradient(135deg, var(--teal), var(--teal-2)); color: #fff; border-radius: 11px; text-decoration: none; font-weight: 700; font-size: 14px; transition: var(--t); box-shadow: 0 4px 16px rgba(13,148,136,.3); }
+.btn-go:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(13,148,136,.45); }
+
+/* Confirm overlay */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; }
+.overlay.open { display: flex; }
+.cfm { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px; text-align: center; max-width: 340px; width: 90%; box-shadow: var(--sh-lg); animation: popIn .3s var(--ease); }
+.cfm h3 { font-family: 'Libre Baskerville', serif; font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.cfm p { color: var(--muted); font-size: 13.5px; margin-bottom: 22px; }
+.cfm-btns { display: flex; gap: 10px; justify-content: center; }
+.btn-cx { padding: 10px 20px; border: 1.5px solid var(--border); border-radius: 9px; background: none; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; color: var(--text); }
+.btn-dx { padding: 10px 20px; background: var(--red); border: none; border-radius: 9px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: var(--t); }
+.btn-dx:hover { background: #dc2626; }
+
+@media (max-width: 700px) { table { font-size: 12px; } thead th, tbody td { padding: 10px 12px; } }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="overlay" id="overlay">
+  <div class="cfm">
+    <div style="font-size:34px;margin-bottom:10px">🗑</div>
+    <h3>Delete Record?</h3>
+    <p>This diagnostic record will be permanently removed.</p>
+    <div class="cfm-btns">
+      <button class="btn-cx" onclick="closeOv()">Cancel</button>
+      <button class="btn-dx" id="cfmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="pg-head rev">
+    <div>
+      <h1>📋 Diagnostic History</h1>
+      <p>All saved patient predictions, filterable and searchable.</p>
+    </div>
+    {% if records %}
+    <form method="POST" action="{{ url_for('clear_history') }}" onsubmit="return confirm('Clear ALL records? This cannot be undone.')">
+      <button type="submit" class="btn-clear">🗑 Clear All</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="filters rev">
+    <input type="text" id="searchIn" placeholder="🔍 Search by age, sex, TSH…" oninput="applyFilter()">
+    <select id="sentIn" onchange="applyFilter()">
+      <option value="">All Results</option>
+      <option value="P">🚨 Positive</option>
+      <option value="N">✅ Negative</option>
+    </select>
+  </div>
+  <div class="chips rev">
+    <button class="chip all act" onclick="setChip('',this)">All</button>
+    <button class="chip pos" onclick="setChip('P',this)">🚨 Positive</button>
+    <button class="chip neg2" onclick="setChip('N',this)">✅ Negative</button>
+  </div>
+
+  {% if records %}
+  <div class="table-wrap rev">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Result</th>
+          <th>Age</th>
+          <th>Sex</th>
+          <th>TSH</th>
+          <th>Confidence</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        {% for idx, r in records %}
+        <tr data-result="{{ r.result }}" data-text="{{ r.age }} {{ r.sex }} {{ r.tsh }}">
+          <td style="color:var(--muted)">{{ loop.index }}</td>
+          <td>
+            <span class="badge {{ r.result }}">
+              {{ '🚨 Positive' if r.result == 'P' else '✅ Negative' }}
+            </span>
+          </td>
+          <td>{{ r.age }} yrs</td>
+          <td>{{ r.sex }}</td>
+          <td>{{ r.tsh }}</td>
+          <td>
+            <div class="conf-mini {{ r.result }}">
+              <div class="cbar"><div class="cfill" style="width:{{ r.confidence }}%"></div></div>
+              <span style="font-size:12px;color:var(--muted)">{{ r.confidence }}%</span>
+            </div>
+          </td>
+          <td style="color:var(--muted)">{{ r.date }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('delete_record', index=idx) }}">
+              <button type="submit" class="del-btn" onclick="return cfmDel(event, this.closest('form'))">🗑</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state rev">
+    <span class="ei">📭</span>
+    <h2>No Records Yet</h2>
+    <p>Run your first diagnostic to see results here.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn-go">⚕ Run Diagnosis</a>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var pendForm = null;
+function cfmDel(e, form){ e.preventDefault(); pendForm=form; document.getElementById('overlay').classList.add('open'); return false; }
+function closeOv(){ document.getElementById('overlay').classList.remove('open'); pendForm=null; }
+document.getElementById('cfmBtn').addEventListener('click', function(){ if(pendForm) pendForm.submit(); });
+
+function setChip(v, el){
+  document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('act'); });
+  el.classList.add('act');
+  document.getElementById('sentIn').value = v;
+  applyFilter();
+}
+function applyFilter(){
+  var q = document.getElementById('searchIn').value.toLowerCase();
+  var s = document.getElementById('sentIn').value;
+  var rows = document.querySelectorAll('#tbody tr');
+  rows.forEach(function(r){
+    var mt = !q || r.dataset.text.toLowerCase().includes(q);
+    var ms = !s || r.dataset.result === s;
+    r.style.display = (mt && ms) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% block title %}ThyroidDetect — Login{% endblock %}
+
+{% block head %}
+<style>
+body { display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+
+/* Animated grid bg */
+.grid-bg {
+  position: fixed; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(13,148,136,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13,148,136,.07) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridDrift 20s linear infinite;
+}
+@keyframes gridDrift { from{background-position:0 0} to{background-position:60px 60px} }
+
+/* Glow orbs */
+.orb { position: fixed; border-radius: 50%; filter: blur(100px); pointer-events: none; }
+.o1 { width:500px;height:500px;background:rgba(13,148,136,.12);top:-150px;left:-150px;animation:pulse2 8s ease-in-out infinite; }
+.o2 { width:380px;height:380px;background:rgba(217,119,6,.1);bottom:-120px;right:-100px;animation:pulse2 11s ease-in-out infinite reverse; }
+@keyframes pulse2 { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+/* Login card */
+.login-wrap {
+  display: grid; grid-template-columns: 1fr 1fr;
+  width: min(960px, 95vw); min-height: 600px;
+  background: var(--surface);
+  border-radius: 26px;
+  border: 1px solid var(--border);
+  box-shadow: 0 30px 80px rgba(13,148,136,0.12), 0 0 0 1px rgba(13,148,136,.08);
+  overflow: hidden;
+  opacity: 0; transform: translateY(30px);
+  transition: opacity .7s var(--ease), transform .7s var(--ease);
+  position: relative; z-index: 1;
+}
+.login-wrap.vis { opacity: 1; transform: translateY(0); }
+
+/* Left panel */
+.lp {
+  background: linear-gradient(160deg, #0a3d38 0%, #0d5c54 50%, #0a3d38 100%);
+  padding: 52px 44px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  position: relative; overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.lp-mesh {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle at 30% 70%, rgba(13,148,136,.14) 0%, transparent 60%),
+                    radial-gradient(circle at 80% 20%, rgba(217,119,6,.08) 0%, transparent 50%);
+}
+.lp-brand { display: flex; align-items: center; gap: 13px; position: relative; }
+.lp-icon {
+  width: 50px; height: 50px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-2));
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; box-shadow: 0 8px 24px rgba(13,148,136,.4);
+}
+.lp-name { font-family: 'Libre Baskerville', serif; font-size: 24px; font-weight: 700; color: #fff; }
+.lp-sub  { font-size: 10px; color: rgba(255,255,255,.55); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+.lp-copy { position: relative; }
+.lp-copy h2 {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 32px; font-weight: 700; color: #fff;
+  line-height: 1.25; margin-bottom: 14px;
+}
+.lp-copy h2 em { font-style: italic; color: #7dd3ca; }
+.lp-copy p { color: rgba(255,255,255,.72); font-size: 14px; line-height: 1.75; }
+
+.lp-stats { display: flex; gap: 12px; position: relative; }
+.stat-b {
+  background: rgba(13,148,136,.1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 16px; flex: 1;
+}
+.stat-b .n { font-family: 'Libre Baskerville', serif; font-size: 20px; font-weight: 700; color: #7dd3ca; }
+.stat-b .l { font-size: 10px; color: rgba(255,255,255,.5); margin-top: 2px; letter-spacing: .5px; }
+
+/* Right panel */
+.rp { padding: 52px 48px; display: flex; flex-direction: column; justify-content: center; }
+
+.sec-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(16,185,129,.1); color: var(--green);
+  border: 1px solid rgba(16,185,129,.2);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .6px;
+  padding: 5px 13px; border-radius: 20px;
+  margin-bottom: 22px; width: fit-content;
+}
+.sec-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: secPulse 2s infinite; }
+@keyframes secPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.6)} }
+
+.form-head { margin-bottom: 28px; }
+.form-head h2 { font-family: 'Libre Baskerville', serif; font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+.form-head p { color: var(--muted); font-size: 14px; }
+
+/* Alert */
+.alert-err {
+  background: #fef2f2; border: 1px solid rgba(220,38,38,.25);
+  color: var(--red); border-radius: 10px; padding: 11px 14px;
+  font-size: 13px; margin-bottom: 16px;
+  animation: shakeX .4s ease;
+}
+@keyframes shakeX { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+/* Form */
+.fg { margin-bottom: 16px; }
+.fl { display: block; font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .9px; margin-bottom: 8px; }
+.iw { position: relative; }
+.ii { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; }
+.fi {
+  width: 100%; padding: 13px 14px 13px 44px;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 11px; font-family: 'DM Sans', sans-serif;
+  font-size: 14.5px; color: var(--text); outline: none;
+  transition: var(--t);
+}
+.fi:focus { border-color: var(--teal); box-shadow: 0 0 0 4px rgba(13,148,136,.10); background: #ffffff; }
+.fi::placeholder { color: var(--muted); }
+.pt { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 15px; color: var(--muted); transition: color .2s; }
+.pt:hover { color: var(--teal-2); }
+.ferr { font-size: 11.5px; color: var(--red); margin-top: 5px; display: none; }
+
+/* Opts */
+.opts { display: flex; align-items: center; margin-bottom: 22px; }
+.rm { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--muted); user-select: none; }
+.rm input { display: none; }
+.chk { width: 17px; height: 17px; border: 1.5px solid var(--border); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: transparent; transition: var(--t); }
+.rm input:checked ~ .chk { background: var(--teal); border-color: var(--teal); color: #fff; }
+
+/* Submit */
+.btn-login {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-2));
+  color: #fff; border: none; border-radius: 11px;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: var(--t); letter-spacing: .2px;
+  box-shadow: 0 4px 18px rgba(13,148,136,.3);
+}
+.btn-login:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(13,148,136,.45); }
+.btn-login:active { transform: translateY(0); }
+.btn-login:disabled { opacity: .6; cursor: not-allowed; }
+.bsp { display: none; width: 17px; height: 17px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+.btn-login.ld .blt { display: none; }
+.btn-login.ld .bsp { display: block; }
+
+@media (max-width: 700px) {
+  .login-wrap { grid-template-columns: 1fr; }
+  .lp { min-height: 200px; padding: 32px 28px; }
+  .lp-copy h2 { font-size: 24px; }
+  .rp { padding: 36px 28px; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="grid-bg"></div>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+
+<div class="login-wrap" id="loginCard">
+  <!-- LEFT -->
+  <div class="lp">
+    <div class="lp-mesh"></div>
+    <div class="lp-brand">
+      <div class="lp-icon">🔬</div>
+      <div>
+        <div class="lp-name">ThyroidDetect</div>
+        <div class="lp-sub">AI Clinical Diagnostics</div>
+      </div>
+    </div>
+    <div class="lp-copy">
+      <h2>Advanced <em>thyroid</em> disease detection powered by AI.</h2>
+      <p>Random Forest classifier trained on real clinical data with 15 biomarkers for accurate early detection of thyroid disorders.</p>
+    </div>
+    <div class="lp-stats">
+      <div class="stat-b"><div class="n">RF</div><div class="l">Algorithm</div></div>
+      <div class="stat-b"><div class="n">15</div><div class="l">Biomarkers</div></div>
+      <div class="stat-b"><div class="n">P/N</div><div class="l">Classification</div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="rp">
+    <div class="sec-badge"><div class="sec-dot"></div>🔐 Clinical Secure</div>
+    <div class="form-head">
+      <h2>Access Portal</h2>
+      <p>Sign in to access the diagnostic system</p>
+    </div>
+
+    {% if error %}
+    <div class="alert-err">⚠ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('login') }}" id="lf" novalidate>
+      <div class="fg">
+        <label class="fl" for="username">Username</label>
+        <div class="iw">
+          <span class="ii">👤</span>
+          <input class="fi" type="text" id="username" name="username"
+            placeholder="Enter your username" required maxlength="64" autocomplete="username">
+        </div>
+        <div class="ferr" id="uerr">Username is required.</div>
+      </div>
+      <div class="fg">
+        <label class="fl" for="password">Password</label>
+        <div class="iw">
+          <span class="ii">🔒</span>
+          <input class="fi" type="password" id="password" name="password"
+            placeholder="Enter your password" required maxlength="128" autocomplete="current-password">
+          <button type="button" class="pt" id="pBtn">👁</button>
+        </div>
+        <div class="ferr" id="perr">Password is required.</div>
+      </div>
+      <div class="opts">
+        <label class="rm" for="rem">
+          <input type="checkbox" id="rem" name="remember">
+          <span class="chk">✓</span>
+          Remember me
+        </label>
+      </div>
+      <button type="submit" class="btn-login" id="sbtn">
+        <span class="blt">Enter System →</span>
+        <div class="bsp"></div>
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  setTimeout(function(){
+    document.getElementById('loginCard').classList.add('vis');
+  }, 500);
+
+  var SK = 'td_l';
+  function lm(){ try{ return JSON.parse(localStorage.getItem(SK))||{}; }catch(e){ return {}; } }
+  function sm(m){ try{ localStorage.setItem(SK,JSON.stringify(m)); }catch(e){} }
+  var meta = lm();
+  if(meta.ru){ document.getElementById('username').value=meta.ru; document.getElementById('rem').checked=true; }
+
+  document.getElementById('pBtn').addEventListener('click', function(){
+    var p=document.getElementById('password');
+    p.type=p.type==='password'?'text':'password';
+    this.textContent=p.type==='password'?'👁':'🙈';
+  });
+
+  document.getElementById('lf').addEventListener('submit', function(e){
+    var u=document.getElementById('username').value.trim();
+    var p=document.getElementById('password').value;
+    var ok=true;
+    if(!u){ document.getElementById('uerr').style.display='block'; ok=false; } else { document.getElementById('uerr').style.display='none'; }
+    if(!p){ document.getElementById('perr').style.display='block'; ok=false; } else { document.getElementById('perr').style.display='none'; }
+    if(!ok){ e.preventDefault(); return; }
+    var m=lm();
+    if(document.getElementById('rem').checked) m.ru=u; else delete m.ru;
+    sm(m);
+    document.getElementById('sbtn').classList.add('ld');
+    document.getElementById('sbtn').disabled=true;
+  });
+})();
+</script>
+{% endblock %}

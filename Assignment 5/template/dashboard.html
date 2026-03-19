@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% block title %}ThyroidDetect — Diagnose{% endblock %}
+
+{% block head %}
+<style>
+main { max-width: 1160px; margin: 0 auto; padding: calc(var(--nav) + 36px) 24px 70px; }
+
+/* PAGE HEADER */
+.pg-head { margin-bottom: 30px; }
+.pg-head h1 { font-family: 'Libre Baskerville', serif; font-size: 28px; font-weight: 700; margin-bottom: 5px; }
+.pg-head p { color: var(--muted); font-size: 14.5px; }
+.pg-head h1 span { color: var(--teal-2); }
+
+/* DEMO BANNER */
+.demo-banner {
+  background: var(--amber-pale); border: 1px solid rgba(217,119,6,.3);
+  color: var(--amber-2); padding: 11px 16px; border-radius: 12px;
+  font-size: 13px; font-weight: 600; margin-bottom: 20px;
+}
+
+/* STAT CARDS */
+.sgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 26px; }
+.scard {
+  background: var(--surface); border-radius: var(--r-md);
+  border: 1px solid var(--border); padding: 20px 22px;
+  box-shadow: var(--sh); transition: var(--t); cursor: default;
+}
+.scard:hover { transform: translateY(-3px); border-color: var(--teal); }
+.scard .sn { font-family: 'Libre Baskerville', serif; font-size: 30px; font-weight: 700; margin-bottom: 4px; }
+.scard .sl { font-size: 11px; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+.sdot { width: 8px; height: 8px; border-radius: 50%; }
+.st { background: var(--teal); }
+.sp { background: var(--red); }
+.sn2 { background: var(--green); }
+
+/* MAIN GRID */
+.mgrid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 22px; align-items: start; }
+
+/* FORM CARD */
+.form-card { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); padding: 32px; }
+.card-title {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 19px; font-weight: 700; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 10px; color: var(--text);
+}
+.card-title .ct-badge {
+  background: var(--teal-pale); color: var(--teal-2);
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 11px; padding: 3px 10px; font-family: 'DM Sans', sans-serif;
+}
+
+/* Section divider */
+.sec-div { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--teal); margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fw { grid-column: 1 / -1; }
+.fg label { display: block; font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+
+input[type="number"], input[type="text"], select {
+  width: 100%; padding: 11px 13px;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--text); outline: none;
+  transition: var(--t); -webkit-appearance: none;
+}
+input[type="number"]:focus, select:focus {
+  border-color: var(--teal); background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13,148,136,.10);
+}
+input::placeholder, select option { color: var(--muted); background: var(--surface); }
+select { cursor: pointer; }
+
+/* Toggle group (Yes/No) */
+.toggle-group { display: flex; gap: 0; }
+.toggle-group input { display: none; }
+.toggle-group label {
+  flex: 1; text-align: center;
+  padding: 10px 0; font-size: 13px; font-weight: 700;
+  cursor: pointer; border: 1.5px solid var(--border);
+  background: var(--surface2); color: var(--muted);
+  transition: var(--t); font-family: 'DM Sans', sans-serif;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.toggle-group label:first-of-type { border-radius: 10px 0 0 10px; }
+.toggle-group label:last-of-type  { border-radius: 0 10px 10px 0; border-left: none; }
+.toggle-group input:checked + label {
+  background: var(--teal); border-color: var(--teal); color: #fff;
+}
+
+/* Error box */
+.err-box {
+  background: #fef2f2; border: 1px solid rgba(220,38,38,.25);
+  color: var(--red); border-radius: 10px; padding: 11px 14px;
+  font-size: 13px; margin-bottom: 16px;
+}
+
+/* Submit btn */
+.btn-predict {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-2));
+  color: #fff; border: none; border-radius: 11px;
+  font-family: 'Libre Baskerville', serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: var(--t); box-shadow: 0 4px 18px rgba(13,148,136,.3);
+  margin-top: 20px; letter-spacing: .2px;
+}
+.btn-predict:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(13,148,136,.45); }
+.btn-predict:active { transform: translateY(0); }
+.bsp2 { display: none; width: 17px; height: 17px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+.btn-predict.ld .bt { display: none; }
+.btn-predict.ld .bsp2 { display: block; }
+
+/* RIGHT SIDE */
+.right-col { display: flex; flex-direction: column; gap: 18px; }
+
+/* RESULT CARD */
+.result-card {
+  background: var(--surface); border-radius: var(--r-lg);
+  border: 1px solid var(--border); padding: 28px;
+  animation: popIn .45s var(--ease);
+}
+.result-card.positive { border-color: rgba(220,38,38,.3); background: linear-gradient(160deg, #fff5f5, var(--surface)); }
+.result-card.negative { border-color: rgba(13,148,136,.3); background: linear-gradient(160deg, #f0faf9, var(--surface)); }
+
+.res-icon { font-size: 42px; margin-bottom: 14px; display: block; }
+.res-label {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 22px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;
+}
+.positive .res-label { color: #b91c1c; }
+.negative .res-label { color: var(--teal-2); }
+.res-sub { color: var(--muted); font-size: 13.5px; line-height: 1.65; margin-bottom: 18px; }
+
+/* Confidence bar */
+.conf-row { margin-bottom: 16px; }
+.conf-head { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+.conf-bg { height: 8px; background: rgba(0,0,0,.07); border-radius: 4px; overflow: hidden; }
+.conf-fill { height: 100%; border-radius: 4px; transition: width 1s var(--ease); }
+.positive .conf-fill { background: linear-gradient(90deg, #dc2626, #ef4444); }
+.negative .conf-fill { background: linear-gradient(90deg, var(--teal), var(--teal-2)); }
+
+/* Patient summary */
+.psummary { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.ps-item { background: rgba(0,0,0,.03); border-radius: 8px; padding: 8px 11px; border: 1px solid var(--border); }
+.ps-label { font-size: 9.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+.ps-val { font-size: 13.5px; font-weight: 600; color: var(--text); margin-top: 2px; }
+
+/* Empty state */
+.empty-result {
+  background: var(--surface); border-radius: var(--r-lg);
+  border: 1px solid var(--border); padding: 48px 28px;
+  text-align: center;
+}
+.empty-result .ei { font-size: 44px; margin-bottom: 14px; display: block; }
+.empty-result h3 { font-family: 'Libre Baskerville', serif; font-size: 19px; font-weight: 700; margin-bottom: 7px; }
+.empty-result p { color: var(--muted); font-size: 14px; line-height: 1.65; }
+
+/* Recent list */
+.recent-card { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); padding: 24px; }
+.recent-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+.ri { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--surface2); border: 1px solid transparent; transition: var(--t); }
+.ri:hover { border-color: var(--border); }
+.ri-badge { flex-shrink: 0; padding: 3px 10px; border-radius: 9px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.ri-badge.P { background: #fee2e2; color: #b91c1c; border: 1px solid rgba(220,38,38,.2); }
+.ri-badge.N { background: var(--teal-pale); color: var(--teal-2); border: 1px solid var(--border); }
+.ri-info .ri-age { font-size: 13px; font-weight: 600; color: var(--text); }
+.ri-info .ri-tsh { font-size: 11.5px; color: var(--muted); }
+.ri-date { font-size: 11px; color: var(--muted); margin-left: auto; flex-shrink: 0; }
+.no-rec { text-align: center; padding: 30px 0; color: var(--muted); font-size: 13.5px; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 26px; right: 26px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 13px; padding: 13px 20px;
+  box-shadow: var(--sh-lg); font-size: 13.5px; font-weight: 600;
+  color: var(--teal-2); border-left: 3px solid var(--teal);
+  opacity: 0; transform: translateY(30px); transition: all .4s var(--ease); z-index: 999;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 960px) { .mgrid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .sgrid { grid-template-columns: repeat(3,1fr); } .fgrid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block body %}
+<main>
+  <!-- Header -->
+  <div class="pg-head rev">
+    <h1>⚕ Thyroid <span>Diagnostic</span> System</h1>
+    <p>Enter patient biomarker values to predict thyroid disease using the trained Random Forest model.</p>
+  </div>
+
+  {% if not model_loaded %}
+  <div class="demo-banner rev">⚠ Model file not found — running in demo mode. Place <code>thyroid_model.pkl</code> in the same folder as <code>app.py</code>.</div>
+  {% endif %}
+
+  {% if error %}<div class="err-box rev">⚠ {{ error }}</div>{% endif %}
+
+  <!-- STAT CARDS -->
+  <div class="sgrid">
+    <div class="scard rev" style="transition-delay:.04s">
+      <div class="sn" style="color:var(--teal-2)">{{ stats.total }}</div>
+      <div class="sl"><span class="sdot st"></span>Total Diagnoses</div>
+    </div>
+    <div class="scard rev" style="transition-delay:.09s">
+      <div class="sn" style="color:#b91c1c">{{ stats.positive }}</div>
+      <div class="sl"><span class="sdot sp"></span>Positive (Disease)</div>
+    </div>
+    <div class="scard rev" style="transition-delay:.14s">
+      <div class="sn" style="color:var(--green)">{{ stats.negative }}</div>
+      <div class="sl"><span class="sdot sn2"></span>Negative (Clear)</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="mgrid">
+    <!-- FORM -->
+    <div class="form-card rev">
+      <div class="card-title">
+        🧬 Patient Input Form
+        <span class="ct-badge">Random Forest</span>
+      </div>
+
+      <form method="POST" action="{{ url_for('dashboard') }}" id="dform">
+
+        <div class="sec-div">👤 Demographics</div>
+        <div class="fgrid">
+          <div class="fg">
+            <label>Age (years)</label>
+            <input type="number" name="age" placeholder="e.g. 45" min="1" max="120"
+              value="{{ form_data.get('age','') }}" required>
+          </div>
+          <div class="fg">
+            <label>Sex</label>
+            <div class="toggle-group">
+              <input type="radio" name="sex" id="sexM" value="M" {% if form_data.get('sex')=='M' %}checked{% endif %}>
+              <label for="sexM">Male</label>
+              <input type="radio" name="sex" id="sexF" value="F" {% if form_data.get('sex','F')=='F' %}checked{% endif %}>
+              <label for="sexF">Female</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec-div">💊 Medical History</div>
+        <div class="fgrid">
+          <div class="fg">
+            <label>On Thyroxine?</label>
+            <div class="toggle-group">
+              <input type="radio" name="on_thyroxine" id="ot1" value="1" {% if form_data.get('on_thyroxine')=='1' %}checked{% endif %}>
+              <label for="ot1">Yes</label>
+              <input type="radio" name="on_thyroxine" id="ot0" value="0" {% if form_data.get('on_thyroxine','0')=='0' %}checked{% endif %}>
+              <label for="ot0">No</label>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Sick?</label>
+            <div class="toggle-group">
+              <input type="radio" name="sick" id="sk1" value="1" {% if form_data.get('sick')=='1' %}checked{% endif %}>
+              <label for="sk1">Yes</label>
+              <input type="radio" name="sick" id="sk0" value="0" {% if form_data.get('sick','0')=='0' %}checked{% endif %}>
+              <label for="sk0">No</label>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Pregnant?</label>
+            <div class="toggle-group">
+              <input type="radio" name="pregnant" id="pg1" value="1" {% if form_data.get('pregnant')=='1' %}checked{% endif %}>
+              <label for="pg1">Yes</label>
+              <input type="radio" name="pregnant" id="pg0" value="0" {% if form_data.get('pregnant','0')=='0' %}checked{% endif %}>
+              <label for="pg0">No</label>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Thyroid Surgery?</label>
+            <div class="toggle-group">
+              <input type="radio" name="thyroid_surgery" id="ts1" value="1" {% if form_data.get('thyroid_surgery')=='1' %}checked{% endif %}>
+              <label for="ts1">Yes</label>
+              <input type="radio" name="thyroid_surgery" id="ts0" value="0" {% if form_data.get('thyroid_surgery','0')=='0' %}checked{% endif %}>
+              <label for="ts0">No</label>
+            </div>
+          </div>
+          <div class="fg">
+            <label>I131 Treatment?</label>
+            <div class="toggle-group">
+              <input type="radio" name="i131_treatment" id="i1" value="1" {% if form_data.get('i131_treatment')=='1' %}checked{% endif %}>
+              <label for="i1">Yes</label>
+              <input type="radio" name="i131_treatment" id="i0" value="0" {% if form_data.get('i131_treatment','0')=='0' %}checked{% endif %}>
+              <label for="i0">No</label>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Antithyroid Medication?</label>
+            <div class="toggle-group">
+              <input type="radio" name="antithyroid_medication" id="am1" value="1" {% if form_data.get('antithyroid_medication')=='1' %}checked{% endif %}>
+              <label for="am1">Yes</label>
+              <input type="radio" name="antithyroid_medication" id="am0" value="0" {% if form_data.get('antithyroid_medication','0')=='0' %}checked{% endif %}>
+              <label for="am0">No</label>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Goitre?</label>
+            <div class="toggle-group">
+              <input type="radio" name="goitre" id="go1" value="1" {% if form_data.get('goitre')=='1' %}checked{% endif %}>
+              <label for="go1">Yes</label>
+              <input type="radio" name="goitre" id="go0" value="0" {% if form_data.get('goitre','0')=='0' %}checked{% endif %}>
+              <label for="go0">No</label>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Tumor?</label>
+            <div class="toggle-group">
+              <input type="radio" name="tumor" id="tu1" value="1" {% if form_data.get('tumor')=='1' %}checked{% endif %}>
+              <label for="tu1">Yes</label>
+              <input type="radio" name="tumor" id="tu0" value="0" {% if form_data.get('tumor','0')=='0' %}checked{% endif %}>
+              <label for="tu0">No</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec-div">🧪 Lab Biomarker Values</div>
+        <div class="fgrid">
+          <div class="fg">
+            <label>TSH (µIU/mL)</label>
+            <input type="number" step="0.01" name="tsh" placeholder="Normal: 0.4–4.0"
+              value="{{ form_data.get('tsh','') }}" required>
+          </div>
+          <div class="fg">
+            <label>T3 (nmol/L)</label>
+            <input type="number" step="0.01" name="t3" placeholder="Normal: 1.2–2.7"
+              value="{{ form_data.get('t3','') }}" required>
+          </div>
+          <div class="fg">
+            <label>TT4 (nmol/L)</label>
+            <input type="number" step="0.1" name="tt4" placeholder="Normal: 66–181"
+              value="{{ form_data.get('tt4','') }}" required>
+          </div>
+          <div class="fg">
+            <label>T4U (ratio)</label>
+            <input type="number" step="0.01" name="t4u" placeholder="Normal: 0.7–1.3"
+              value="{{ form_data.get('t4u','') }}" required>
+          </div>
+          <div class="fg fw">
+            <label>FTI (Free Thyroxine Index)</label>
+            <input type="number" step="0.1" name="fti" placeholder="Normal: 64–154"
+              value="{{ form_data.get('fti','') }}" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-predict" id="pBtn">
+          <span class="bt">🔬 Run Diagnostic</span>
+          <div class="bsp2"></div>
+        </button>
+      </form>
+    </div>
+
+    <!-- RIGHT COL -->
+    <div class="right-col">
+      <!-- RESULT -->
+      {% if result %}
+      <div class="result-card {{ result.class }} rev">
+        <span class="res-icon">{% if result.class == 'positive' %}🚨{% else %}✅{% endif %}</span>
+        <div class="res-label">{{ result.label }}</div>
+        <p class="res-sub">
+          {% if result.class == 'positive' %}
+            The model indicates thyroid disease is <strong>likely present</strong>. Please consult a qualified endocrinologist for clinical confirmation.
+          {% else %}
+            The model indicates <strong>no thyroid disease detected</strong>. Continue routine monitoring as advised by your physician.
+          {% endif %}
+          {% if result.demo %}<br><em style="color:var(--amber-2)">(Demo mode — train your model for real predictions)</em>{% endif %}
+        </p>
+        <div class="conf-row">
+          <div class="conf-head">
+            <span>Model Confidence</span>
+            <span>{{ result.confidence }}%</span>
+          </div>
+          <div class="conf-bg">
+            <div class="conf-fill" style="width: {{ result.confidence }}%"></div>
+          </div>
+        </div>
+        <div class="psummary">
+          <div class="ps-item"><div class="ps-label">Age</div><div class="ps-val">{{ form_data.get('age','—') }} yrs</div></div>
+          <div class="ps-item"><div class="ps-label">Sex</div><div class="ps-val">{{ 'Male' if form_data.get('sex')=='M' else 'Female' }}</div></div>
+          <div class="ps-item"><div class="ps-label">TSH</div><div class="ps-val">{{ form_data.get('tsh','—') }} µIU/mL</div></div>
+          <div class="ps-item"><div class="ps-label">T3</div><div class="ps-val">{{ form_data.get('t3','—') }} nmol/L</div></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-result rev">
+        <span class="ei">🔬</span>
+        <h3>Awaiting Patient Data</h3>
+        <p>Fill in the patient details and biomarker values on the left, then click <em>Run Diagnostic</em> to get a prediction.</p>
+      </div>
+      {% endif %}
+
+      <!-- RECENT -->
+      <div class="recent-card rev" style="transition-delay:.1s">
+        <div class="card-title" style="font-size:17px;margin-bottom:16px">🕒 Recent Diagnoses</div>
+        <div class="recent-list">
+          {% if recent %}
+            {% for r in recent %}
+            <div class="ri">
+              <span class="ri-badge {{ r.result }}">{{ 'POS' if r.result=='P' else 'NEG' }}</span>
+              <div class="ri-info">
+                <div class="ri-age">Age {{ r.age }} · {{ r.sex }}</div>
+                <div class="ri-tsh">TSH {{ r.tsh }}</div>
+              </div>
+              <span class="ri-date">{{ r.date }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p class="no-rec">No diagnoses yet. Run your first analysis.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+{% if result %}
+<div class="toast" id="toast">✅ Diagnosis saved to history!</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('dform').addEventListener('submit', function(){
+  var b = document.getElementById('pBtn');
+  b.classList.add('ld'); b.disabled = true;
+});
+setTimeout(function(){
+  var t = document.getElementById('toast');
+  if(t){ t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 3200); }
+}, 600);
+</script>
+{% endblock %}

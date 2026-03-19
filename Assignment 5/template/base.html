@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}ThyroidDetect{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════ DESIGN TOKENS — LIGHT THEME ═══════════════ */
+:root {
+  --bg:       #f0f7f6;
+  --surface:  #ffffff;
+  --surface2: #f5fafa;
+  --teal:     #0d9488;
+  --teal-2:   #0f766e;
+  --teal-pale:#0d948812;
+  --amber:    #b45309;
+  --amber-2:  #d97706;
+  --amber-pale:#d9770614;
+  --text:     #0f2724;
+  --muted:    #5c7a77;
+  --border:   rgba(13,148,136,0.15);
+  --red:      #dc2626;
+  --red-pale: #dc262610;
+  --green:    #059669;
+  --green-pale:#05966910;
+  --nav:      68px;
+  --sh:       0 4px 24px rgba(13,148,136,0.10);
+  --sh-lg:    0 20px 60px rgba(13,148,136,0.14);
+  --ease:     cubic-bezier(0.4,0,0.2,1);
+  --t:        all 0.28s var(--ease);
+  --r-sm:     10px;
+  --r-md:     16px;
+  --r-lg:     22px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9997; opacity: 0.5;
+}
+
+/* ── PAGE LOADER ── */
+#loader {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px;
+  transition: opacity 0.6s var(--ease), visibility 0.6s;
+}
+#loader.out { opacity: 0; visibility: hidden; }
+.loader-ring {
+  width: 52px; height: 52px;
+  border: 2px solid var(--border);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+.loader-text {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 13px; color: var(--muted);
+  letter-spacing: 2px; text-transform: uppercase;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--nav);
+  background: rgba(240,247,246,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+  display: flex; align-items: center; padding: 0 28px;
+}
+.nav-inner {
+  max-width: 1160px; margin: 0 auto; width: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-brand {
+  display: flex; align-items: center; gap: 11px;
+  text-decoration: none;
+}
+.nav-icon {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-2));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; box-shadow: 0 4px 14px rgba(13,148,136,0.35);
+}
+.nav-name {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 19px; font-weight: 700; color: var(--text);
+}
+.nav-links {
+  display: flex; align-items: center; gap: 2px; list-style: none;
+}
+.nav-links a {
+  text-decoration: none; font-size: 13.5px; font-weight: 500;
+  color: var(--muted); padding: 7px 15px; border-radius: var(--r-sm);
+  transition: var(--t); letter-spacing: 0.2px;
+}
+.nav-links a:hover, .nav-links a.active {
+  color: var(--teal-2); background: var(--teal-pale);
+}
+.nav-links .logout-link { color: var(--red); }
+.nav-links .logout-link:hover { background: var(--red-pale); color: var(--red); }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.nav-user {
+  background: var(--teal-pale); color: var(--teal-2);
+  padding: 5px 14px; border-radius: 20px;
+  font-size: 12.5px; font-weight: 600;
+  border: 1px solid var(--border);
+}
+/* Hamburger */
+.ham {
+  display: none; flex-direction: column; gap: 4px;
+  background: none; border: none; cursor: pointer; padding: 5px;
+}
+.ham span {
+  display: block; width: 20px; height: 2px;
+  background: var(--text); border-radius: 2px; transition: var(--t);
+}
+.ham.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.ham.open span:nth-child(2) { opacity: 0; }
+.ham.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+/* Mobile menu */
+.mob-menu {
+  display: none; position: fixed;
+  top: var(--nav); left: 0; right: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px; z-index: 99;
+  flex-direction: column; gap: 3px;
+}
+.mob-menu.open { display: flex; }
+.mob-menu a {
+  text-decoration: none; color: var(--text);
+  padding: 12px 16px; border-radius: var(--r-sm);
+  font-size: 14.5px; font-weight: 500; transition: var(--t);
+}
+.mob-menu a:hover { background: var(--teal-pale); color: var(--teal-2); }
+
+/* ── REVEAL ANIMATION ── */
+.rev {
+  opacity: 0; transform: translateY(22px);
+  transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
+}
+.rev.in { opacity: 1; transform: translateY(0); }
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--sh);
+}
+
+/* ── BADGE ── */
+.badge-pos { background: var(--green-pale); color: var(--green); border: 1px solid rgba(16,185,129,.25); }
+.badge-neg { background: var(--teal-pale);  color: var(--teal-2);  border: 1px solid var(--border); }
+.badge-warn{ background: var(--amber-pale); color: var(--amber-2); border: 1px solid rgba(217,119,6,.25); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 3px; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes popIn  { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+@keyframes glow   { 0%,100%{box-shadow:0 0 20px rgba(13,148,136,.2)} 50%{box-shadow:0 0 40px rgba(13,148,136,.45)} }
+
+@media (max-width: 680px) {
+  .nav-links { display: none; }
+  .ham { display: flex; }
+}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-text">ThyroidDetect</div>
+</div>
+
+{% if session.username %}
+<nav>
+  <div class="nav-inner">
+    <a href="{{ url_for('dashboard') }}" class="nav-brand">
+      <div class="nav-icon">🔬</div>
+      <span class="nav-name">ThyroidDetect</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint=='dashboard' %}active{% endif %}">⚕ Diagnose</a></li>
+      <li><a href="{{ url_for('history') }}"   class="{% if request.endpoint=='history'   %}active{% endif %}">📋 History</a></li>
+      <li><a href="{{ url_for('about') }}"     class="{% if request.endpoint=='about'     %}active{% endif %}">🎓 About</a></li>
+      <li><a href="{{ url_for('logout') }}" class="logout-link">⎋ Logout</a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="nav-user">👤 {{ session.username }}</div>
+      <button class="ham" id="ham" onclick="toggleMob()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="mob-menu" id="mobMenu">
+  <a href="{{ url_for('dashboard') }}">⚕ Diagnose</a>
+  <a href="{{ url_for('history') }}">📋 History</a>
+  <a href="{{ url_for('about') }}">🎓 About</a>
+  <a href="{{ url_for('logout') }}" style="color:var(--red)">⎋ Logout</a>
+</div>
+{% endif %}
+
+{% block body %}{% endblock %}
+
+<script>
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    document.getElementById('loader').classList.add('out');
+  }, 450);
+});
+
+var ro = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting) e.target.classList.add('in');
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.rev').forEach(function(el){ ro.observe(el); });
+
+function toggleMob(){
+  document.getElementById('ham').classList.toggle('open');
+  document.getElementById('mobMenu').classList.toggle('open');
+}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
